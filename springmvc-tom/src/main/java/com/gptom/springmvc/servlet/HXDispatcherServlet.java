@@ -15,7 +15,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -29,7 +28,6 @@ public class HXDispatcherServlet extends HttpServlet {
     private Properties properties = new Properties();
     private List<String> classNames = new ArrayList<String>();
     private Map<String, Object> ioc = new HashMap<String, Object>();
-    //private Map<String, Method> handlerMapping = new ConcurrentHashMap<String, Method>();
     private List<Handler> handlerMapping = new ArrayList<Handler>();
 
     @Override
@@ -86,9 +84,11 @@ public class HXDispatcherServlet extends HttpServlet {
         for (Map.Entry<String, String[]> param : params.entrySet()) {
             String value = Arrays.toString(param.getValue()).replaceAll("\\[|\\]", "").replaceAll(",\\s", ",");
             //如果找到匹配的对象,则开始填充参数值
-            if(!handler.paramIndexMapping.containsKey(param.getKey())){continue;}
+            if (!handler.paramIndexMapping.containsKey(param.getKey())) {
+                continue;
+            }
             int index = handler.paramIndexMapping.get(param.getKey());
-            paramValues[index] = convert(paramTypes[index],value);
+            paramValues[index] = convert(paramTypes[index], value);
         }
 
         //设置方法中的request和response对象
@@ -97,11 +97,11 @@ public class HXDispatcherServlet extends HttpServlet {
         int respIndex = handler.paramIndexMapping.get(HttpServletResponse.class.getName());
         paramValues[respIndex] = resp;
 
-        handler.method.invoke(handler.controller,paramValues);
+        handler.method.invoke(handler.controller, paramValues);
     }
 
-    private Object convert(Class<?> type,String value){
-        if(Integer.class == type){
+    private Object convert(Class<?> type, String value) {
+        if (Integer.class == type) {
             return Integer.valueOf(value);
         }
         return value;
@@ -129,6 +129,11 @@ public class HXDispatcherServlet extends HttpServlet {
         return null;
     }
 
+    /**
+     * 加载配置文件
+     *
+     * @param location 配置文件路径
+     */
     private void doLoadConfig(String location) {
         //获取文件
         InputStream resource = this.getClass().getClassLoader().getResourceAsStream(location.split(":")[1]);
@@ -147,6 +152,11 @@ public class HXDispatcherServlet extends HttpServlet {
         }
     }
 
+    /**
+     * 扫描配置中所有关联的类
+     *
+     * @param packageName 包名称
+     */
     private void doScanner(String packageName) {
         URL url = this.getClass().getClassLoader().getResource("/" + packageName.replaceAll("\\.", "/"));
         File dir = new File(url.getFile());
@@ -160,6 +170,9 @@ public class HXDispatcherServlet extends HttpServlet {
         }
     }
 
+    /**
+     * 将扫描到的类通过反射,进行实例化,并且放在ioc容器中
+     */
     private void doInstance() {
         if (classNames.isEmpty()) {
             return;
@@ -199,6 +212,9 @@ public class HXDispatcherServlet extends HttpServlet {
         });
     }
 
+    /**
+     * 实现依赖注入,给所有加了autowired的字段赋值
+     */
     private void doAutowried() {
         if (ioc.isEmpty()) {
             return;
@@ -225,6 +241,9 @@ public class HXDispatcherServlet extends HttpServlet {
         }
     }
 
+    /**
+     * 初始化handlerMapping,将所有的路径和对应的方法进行关联
+     */
     private void initHandlerMapping() {
 
         if (ioc.isEmpty()) {
@@ -267,6 +286,9 @@ public class HXDispatcherServlet extends HttpServlet {
         return String.valueOf(chars);
     }
 
+    /**
+     * 内部类,封装路径,路径对应的类,方法,以及参数的顺序
+     */
     private class Handler {
         protected Object controller; //保存方法对应的实例
 
