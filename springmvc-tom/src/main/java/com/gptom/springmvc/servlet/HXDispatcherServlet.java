@@ -290,13 +290,17 @@ public class HXDispatcherServlet extends HttpServlet {
      * 内部类,封装路径,路径对应的类,方法,以及参数的顺序
      */
     private class Handler {
-        protected Object controller; //保存方法对应的实例
+        //保存方法对应的实例
+        protected Object controller;
 
-        protected Method method; // 保存映射的方法
+        // 保存映射的方法
+        protected Method method;
 
-        private Pattern pattern;  // URL
+        // URL
+        private Pattern pattern;
 
-        private Map<String, Integer> paramIndexMapping; //参数排序
+        //参数排序
+        private Map<String, Integer> paramIndexMapping;
 
         protected Handler(Pattern pattern, Object controller, Method method) {
             this.controller = controller;
